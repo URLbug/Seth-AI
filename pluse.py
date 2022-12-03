@@ -1,7 +1,7 @@
 import random
 
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Input, Dropout, LSTM, Embedding,Flatten
+from tensorflow.keras.layers import Dense, Input, Dropout, Normalization
 from tensorflow.keras.callbacks import Callback
 import tensorflow as tf2
 
@@ -75,7 +75,7 @@ for document in document:
 random.shuffle(training)
 training = np.array(training)
 
-train_y = np.array(list(training[:,1]))
+train_x = np.array(list(training[:,0]))
 
 def tf_tfidf(send_word):
   tk = tf2.keras.preprocessing.text.Tokenizer(num_words=17)
@@ -83,17 +83,18 @@ def tf_tfidf(send_word):
 
   return tk.sequences_to_matrix(tk.texts_to_sequences(send_word), mode='tfidf')
 
-train_x = tf_tfidf(word_lists)[1,:]
-
-print(train_x)
+train_x = tf_tfidf(word_lists)
 
 model = Sequential()
 model.add(Input((17,)))
-model.add(Embedding(17,51))
-model.add(Flatten())
-model.add(Dense(4,activation='softmax'))
+model.add(Dropout(.5))
+model.add(Dense(200, activation='relu'))
+model.add(Dropout(.2))
+model.add(Dense(64,activation='relu'))
+model.add(Dropout(.5))
+model.add(Dense(1,activation='softmax'))
 
-model.compile(loss='sparse_categorical_crossentropy',optimizer='adam',metrics=['accuracy'])
+model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy'])
 
 hist = model.fit(train_x,train_y,epochs=200,batch_size=8, callbacks=[Callback()])
 model.save('Seth.model', hist)
